@@ -13,7 +13,6 @@ export default function CopyButton({ text }: Props) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Fallback for older browsers
       const textarea = document.createElement('textarea');
       textarea.value = text;
       document.body.appendChild(textarea);
@@ -27,7 +26,7 @@ export default function CopyButton({ text }: Props) {
 
   return (
     <button className={`copy-btn ${copied ? 'copied' : ''}`} onClick={handleCopy}>
-      {copied ? 'Copied!' : 'Copy to Clipboard'}
+      {copied ? 'Copied!' : 'Copy'}
     </button>
   );
 }

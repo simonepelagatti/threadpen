@@ -10,8 +10,11 @@ interface Props {
 
 export default function NotesInput({ value, onChange, onSubmit, loading, isRefinement }: Props) {
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-      onSubmit();
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (value.trim() && !loading) {
+        onSubmit();
+      }
     }
   };
 
@@ -20,8 +23,8 @@ export default function NotesInput({ value, onChange, onSubmit, loading, isRefin
       <textarea
         placeholder={
           isRefinement
-            ? 'Refine: e.g. "make it shorter", "more formal"...'
-            : 'What should the reply cover? e.g. "Accept the meeting, suggest Thursday instead"'
+            ? 'Refine: e.g. "make it shorter", "more formal"... (Enter to send, Shift+Enter for newline)'
+            : 'What should the reply cover? (Enter to send, Shift+Enter for newline)'
         }
         value={value}
         onChange={(e) => onChange(e.target.value)}

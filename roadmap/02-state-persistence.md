@@ -1,14 +1,13 @@
-# State Persistence Across Popup Close
+# State Persistence (Side Panel Safety Net)
 
 ## Problem
-Switching tabs or clicking outside the popup loses the current draft, notes, loading state, and refinement history. The user has to start over.
+Accidentally closing the side panel (or browser restart) loses the current draft, notes, loading state, and refinement history.
 
 ## Solution
-Persist popup state to `chrome.storage.session` on every meaningful change (debounced). Restore it when the popup reopens.
+Auto-save panel state to `chrome.storage.session` on every meaningful change (debounced 500ms). Restore on panel open. Keyed by thread subject to avoid showing stale data for a different thread.
 
 ## Implementation Notes
-- Save to session storage: notes text, draft, tips, conversation history, loading flag
-- On popup open, hydrate state from session storage before fetching fresh thread data
-- Clear saved state when the user explicitly starts a new draft or the thread changes
-- This is a quick win even before side panel — improves UX immediately
-- If side panel (roadmap #01) ships, this becomes less critical but still useful as a safety net
+- Save to session storage: notes text, draft, tips, conversation history, active tone/intent selections
+- On panel open, hydrate state from session storage before fetching fresh thread data
+- Clear saved state when the thread subject changes (new thread detected)
+- Debounce writes to avoid thrashing storage on every keystroke

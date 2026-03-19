@@ -72,25 +72,124 @@ ${msg.body}
   return prompt;
 }
 
+export function buildNewEmailSystemPrompt(settings: Settings): string {
+  const guidelines = settings.writingGuidelines.trim();
+  const userName = settings.userName.trim();
+
+  let prompt = `You are an email drafting assistant. Your job is to compose a new email from scratch based on the user's notes.
+`;
+
+  if (userName) {
+    prompt += `
+The person you are drafting for is: ${userName}
+`;
+  }
+
+  prompt += `
+Rules:
+- Write only the email body text. Do not include subject lines, headers, or email metadata.
+- Start with an appropriate greeting and end with an appropriate sign-off.
+- Be concise and clear.
+
+IMPORTANT: Structure your response in exactly two sections separated by the marker "---TIPS---".
+- First section: The draft email text only.
+- Second section (after ---TIPS---): 2-4 short practical tips or observations about the email.
+`;
+
+  if (guidelines) {
+    prompt += `
+Writing Guidelines (follow these for tone, style, and content):
+${guidelines}
+`;
+  }
+
+  return prompt;
+}
+
+export function buildSummarizationSystemPrompt(thread: ThreadData): string {
+  let prompt = `You are an email thread summarization assistant. Summarize the following email thread in one concise paragraph. Focus on:
+- The main topic and purpose of the thread
+- Key decisions or action items
+- The current status or what's pending
+
+--- EMAIL THREAD ---
+Subject: ${thread.subject}
+`;
+
+  if (thread.truncated) {
+    prompt += `(${thread.totalMessages - thread.messages.length} older messages omitted)\n\n`;
+  }
+
+  for (const msg of thread.messages) {
+    prompt += `
+From: ${msg.from}
+Date: ${msg.date}
+
+${msg.body}
+
+---
+`;
+  }
+
+  return prompt;
+}
+
 export function buildMessages(
   notes: string,
-  conversationHistory: ConversationTurn[]
+  conversationHistory: ConversationTurn[],
+  toneInstruction?: string,
+  intentInstruction?: string
 ): Array<{ role: 'user' | 'assistant'; content: string }> {
   const messages: Array<{ role: 'user' | 'assistant'; content: string }> = [];
 
+  // Build the instruction prefix from tone/intent
+  let prefix = '';
+  if (toneInstruction) prefix += toneInstruction + '\n';
+  if (intentInstruction) prefix += intentInstruction + '\n';
+
   if (conversationHistory.length === 0) {
-    messages.push({
-      role: 'user',
-      content: `Please draft a reply to the most recent message in the thread. Here are my notes on what the reply should cover:\n\n${notes}`,
-    });
+    const content = prefix
+      ? `${prefix}\nPlease draft a reply following the above instructions. Here are my notes:\n\n${notes}`
+      : `Please draft a reply to the most recent message in the thread. Here are my notes on what the reply should cover:\n\n${notes}`;
+    messages.push({ role: 'user', content });
   } else {
     for (const turn of conversationHistory) {
       messages.push({ role: turn.role, content: turn.content });
     }
-    messages.push({
-      role: 'user',
-      content: notes,
-    });
+    const content = prefix ? `${prefix}\n${notes}` : notes;
+    messages.push({ role: 'user', content });
+  }
+
+  return messages;
+}
+
+export function buildNewEmailMessages(
+  notes: string,
+  recipient: string,
+  subject: string,
+  conversationHistory: ConversationTurn[],
+  toneInstruction?: string,
+  intentInstruction?: string
+): Array<{ role: 'user' | 'assistant'; content: string }> {
+  const messages: Array<{ role: 'user' | 'assistant'; content: string }> = [];
+
+  let prefix = '';
+  if (toneInstruction) prefix += toneInstruction + '\n';
+  if (intentInstruction) prefix += intentInstruction + '\n';
+
+  let context = '';
+  if (recipient) context += `Recipient: ${recipient}\n`;
+  if (subject) context += `Subject: ${subject}\n`;
+
+  if (conversationHistory.length === 0) {
+    const content = `${prefix}${context ? context + '\n' : ''}Please draft a new email based on these notes:\n\n${notes}`;
+    messages.push({ role: 'user', content });
+  } else {
+    for (const turn of conversationHistory) {
+      messages.push({ role: turn.role, content: turn.content });
+    }
+    const content = prefix ? `${prefix}\n${notes}` : notes;
+    messages.push({ role: 'user', content });
   }
 
   return messages;
