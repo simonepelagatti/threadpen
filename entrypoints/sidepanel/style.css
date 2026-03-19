@@ -32,7 +32,7 @@ body {
 .header h1 {
   font-size: 16px;
   font-weight: 600;
-  color: #6b4ce6;
+  color: #15803d;
 }
 
 .header-actions {
@@ -57,7 +57,7 @@ body {
 
 .settings-btn:hover,
 .history-btn:hover {
-  background: #f0f0f0;
+  background: #f0fdf4;
 }
 
 .back-btn {
@@ -65,19 +65,19 @@ body {
   border: none;
   font-size: 13px;
   cursor: pointer;
-  color: #6b4ce6;
+  color: #15803d;
   padding: 2px 4px;
   border-radius: 4px;
 }
 
 .back-btn:hover {
-  background: #f0f0f0;
+  background: #f0fdf4;
 }
 
 /* Mode toggle */
 .mode-toggle {
   display: flex;
-  border: 1px solid #e4e4e8;
+  border: 1px solid #bbf7d0;
   border-radius: 6px;
   overflow: hidden;
 }
@@ -95,18 +95,18 @@ body {
 }
 
 .mode-toggle button.active {
-  background: #6b4ce6;
+  background: #15803d;
   color: #fff;
 }
 
 .mode-toggle button:hover:not(.active) {
-  background: #f8f8fb;
+  background: #f0fdf4;
 }
 
 /* Thread preview */
 .thread-preview {
-  background: #f8f8fb;
-  border: 1px solid #e4e4e8;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
   border-radius: 6px;
   padding: 10px;
 }
@@ -123,9 +123,9 @@ body {
 
 .load-thread-btn {
   padding: 6px 14px;
-  border: 1px solid #6b4ce6;
+  border: 1px solid #15803d;
   background: #fff;
-  color: #6b4ce6;
+  color: #15803d;
   border-radius: 6px;
   font-size: 12px;
   font-weight: 500;
@@ -134,7 +134,7 @@ body {
 }
 
 .load-thread-btn:hover:not(:disabled) {
-  background: #6b4ce6;
+  background: #15803d;
   color: #fff;
 }
 
@@ -210,8 +210,8 @@ body {
 }
 
 .summarize-btn:hover:not(:disabled) {
-  border-color: #6b4ce6;
-  color: #6b4ce6;
+  border-color: #15803d;
+  color: #15803d;
 }
 
 .summarize-btn:disabled {
@@ -222,8 +222,8 @@ body {
 .thread-summary {
   margin-top: 8px;
   padding: 8px;
-  background: #f0f4ff;
-  border: 1px solid #c7d2fe;
+  background: #f0fdf4;
+  border: 1px solid #86efac;
   border-radius: 4px;
   font-size: 12px;
   line-height: 1.5;
@@ -240,7 +240,7 @@ body {
 .thread-summary .summary-label {
   font-size: 11px;
   font-weight: 600;
-  color: #4338ca;
+  color: #15803d;
   text-transform: uppercase;
   letter-spacing: 0.3px;
 }
@@ -254,7 +254,7 @@ body {
   background: none;
   border: none;
   font-size: 11px;
-  color: #4338ca;
+  color: #15803d;
   cursor: pointer;
   padding: 0;
 }
@@ -332,21 +332,21 @@ body {
 }
 
 .draft-output.streaming {
-  border-color: #93c5fd;
-  background: #f0f7ff;
+  border-color: #86efac;
+  background: #ecfdf5;
 }
 
 .draft-label {
   font-size: 11px;
   font-weight: 600;
-  color: #16a34a;
+  color: #15803d;
   margin-bottom: 6px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .draft-output.streaming .draft-label {
-  color: #2563eb;
+  color: #059669;
 }
 
 .draft-text {
@@ -389,7 +389,7 @@ body {
   display: inline-block;
   width: 2px;
   height: 1em;
-  background: #2563eb;
+  background: #059669;
   margin-left: 1px;
   animation: blink 0.8s step-end infinite;
   vertical-align: text-bottom;
@@ -465,32 +465,32 @@ body {
 
 /* Copy button */
 .copy-btn {
-  border: 1px solid #6b4ce6;
+  border: 1px solid #15803d;
   background: #fff;
-  color: #6b4ce6;
+  color: #15803d;
 }
 
 .copy-btn:hover {
-  background: #6b4ce6;
+  background: #15803d;
   color: #fff;
 }
 
 .copy-btn.copied {
-  background: #16a34a;
-  border-color: #16a34a;
+  background: #0d9488;
+  border-color: #0d9488;
   color: #fff;
 }
 
 /* Insert button */
 .insert-btn {
-  border: 1px solid #16a34a;
-  background: #16a34a;
+  border: 1px solid #15803d;
+  background: #15803d;
   color: #fff;
 }
 
 .insert-btn:hover {
-  background: #15803d;
-  border-color: #15803d;
+  background: #116b32;
+  border-color: #116b32;
 }
 
 .insert-btn:disabled {
@@ -514,7 +514,7 @@ body {
 .tone-controls .control-section-label {
   font-size: 11px;
   font-weight: 600;
-  color: #6b4ce6;
+  color: #15803d;
   text-transform: uppercase;
   letter-spacing: 0.3px;
 }
@@ -527,7 +527,7 @@ body {
 
 .tone-chip {
   padding: 3px 10px;
-  border: 1px solid #e4e4e8;
+  border: 1px solid #bbf7d0;
   border-radius: 12px;
   background: #fff;
   font-size: 11px;
@@ -537,13 +537,13 @@ body {
 }
 
 .tone-chip:hover {
-  border-color: #6b4ce6;
-  color: #6b4ce6;
+  border-color: #22c55e;
+  color: #15803d;
 }
 
 .tone-chip.selected {
-  background: #6b4ce6;
-  border-color: #6b4ce6;
+  background: #15803d;
+  border-color: #15803d;
   color: #fff;
 }
 
@@ -567,8 +567,8 @@ body {
 
 .notes-input textarea:focus {
   outline: none;
-  border-color: #6b4ce6;
-  box-shadow: 0 0 0 2px rgba(107, 76, 230, 0.15);
+  border-color: #22c55e;
+  box-shadow: 0 0 0 2px rgba(21, 128, 61, 0.15);
 }
 
 .notes-input textarea:disabled {
@@ -578,7 +578,7 @@ body {
 
 .notes-input button {
   padding: 8px 16px;
-  background: #6b4ce6;
+  background: #15803d;
   color: #fff;
   border: none;
   border-radius: 6px;
@@ -589,11 +589,11 @@ body {
 }
 
 .notes-input button:hover:not(:disabled) {
-  background: #5a3dd0;
+  background: #116b32;
 }
 
 .notes-input button:disabled {
-  background: #c4b5fd;
+  background: #86efac;
   cursor: not-allowed;
 }
 
@@ -627,8 +627,8 @@ body {
 
 .compose-form .field input:focus {
   outline: none;
-  border-color: #6b4ce6;
-  box-shadow: 0 0 0 2px rgba(107, 76, 230, 0.15);
+  border-color: #22c55e;
+  box-shadow: 0 0 0 2px rgba(21, 128, 61, 0.15);
 }
 
 /* Settings view */
@@ -671,8 +671,8 @@ body {
 .field select:focus,
 .field textarea:focus {
   outline: none;
-  border-color: #6b4ce6;
-  box-shadow: 0 0 0 2px rgba(107, 76, 230, 0.15);
+  border-color: #22c55e;
+  box-shadow: 0 0 0 2px rgba(21, 128, 61, 0.15);
 }
 
 .field textarea {
@@ -691,7 +691,7 @@ body {
 
 .save-btn {
   padding: 8px 16px;
-  background: #6b4ce6;
+  background: #15803d;
   color: #fff;
   border: none;
   border-radius: 6px;
@@ -702,16 +702,16 @@ body {
 }
 
 .save-btn:hover {
-  background: #5a3dd0;
+  background: #116b32;
 }
 
 .save-btn.saved {
-  background: #16a34a;
+  background: #0d9488;
 }
 
 /* Preset management in settings */
 .preset-section {
-  border: 1px solid #e4e4e8;
+  border: 1px solid #bbf7d0;
   border-radius: 6px;
   padding: 10px;
 }
@@ -769,8 +769,8 @@ body {
 }
 
 .add-preset-btn:hover {
-  border-color: #6b4ce6;
-  color: #6b4ce6;
+  border-color: #22c55e;
+  color: #15803d;
 }
 
 /* History view */
@@ -798,7 +798,7 @@ body {
 }
 
 .history-item {
-  border: 1px solid #e4e4e8;
+  border: 1px solid #bbf7d0;
   border-radius: 6px;
   padding: 10px;
   cursor: pointer;
@@ -806,11 +806,11 @@ body {
 }
 
 .history-item:hover {
-  border-color: #6b4ce6;
+  border-color: #22c55e;
 }
 
 .history-item.expanded {
-  border-color: #6b4ce6;
+  border-color: #15803d;
 }
 
 .history-item-header {
@@ -844,7 +844,7 @@ body {
 .history-item-body {
   margin-top: 8px;
   padding-top: 8px;
-  border-top: 1px solid #e4e4e8;
+  border-top: 1px solid #bbf7d0;
 }
 
 .history-item-draft {
@@ -864,16 +864,16 @@ body {
 
 .history-item-actions button {
   padding: 4px 10px;
-  border: 1px solid #6b4ce6;
+  border: 1px solid #15803d;
   background: #fff;
-  color: #6b4ce6;
+  color: #15803d;
   border-radius: 4px;
   font-size: 11px;
   cursor: pointer;
 }
 
 .history-item-actions button:hover {
-  background: #6b4ce6;
+  background: #15803d;
   color: #fff;
 }
 
