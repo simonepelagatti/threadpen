@@ -120,6 +120,7 @@ export type RuntimeMessage =
   | { type: 'OPEN_NEW_COMPOSE'; payload: { text: string } }
   | { type: 'GENERATE_NEW_EMAIL'; payload: NewEmailDraftRequest }
   | { type: 'DISMISS_THREAD' }
+  | { type: 'INSERT_DRAFT_REPLY_ALL'; payload: { text: string } }
   | { type: 'EXTRACT_CONTACT_INFO'; payload: { recipientEmail: string; threadSnippet: string; generatedDraft: string } };
 
 // --- Port messages (streaming) ---

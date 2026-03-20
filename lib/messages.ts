@@ -37,6 +37,13 @@ export async function insertDraftIntoGmail(text: string): Promise<{ ok: boolean;
   });
 }
 
+export async function insertDraftReplyAll(text: string): Promise<{ ok: boolean; error?: string }> {
+  return sendRuntimeMessage<{ ok: boolean; error?: string }>({
+    type: 'INSERT_DRAFT_REPLY_ALL',
+    payload: { text },
+  });
+}
+
 export async function openNewCompose(text: string): Promise<{ ok: boolean; error?: string }> {
   return sendRuntimeMessage<{ ok: boolean; error?: string }>({
     type: 'OPEN_NEW_COMPOSE',

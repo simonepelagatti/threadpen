@@ -20,6 +20,13 @@ export default defineContentScript({
         return true; // async
       }
 
+      if (message.type === 'INSERT_DRAFT_REPLY_ALL') {
+        insertDraftIntoReplyAll(message.payload.text)
+          .then((result) => sendResponse(result))
+          .catch((err) => sendResponse({ ok: false, error: err.message }));
+        return true; // async
+      }
+
       if (message.type === 'OPEN_NEW_COMPOSE') {
         openNewComposeAndInsert(message.payload.text)
           .then((result) => sendResponse(result))
@@ -83,6 +90,49 @@ async function insertDraftIntoCompose(text: string): Promise<{ ok: boolean; erro
 
   if (!composeBox) {
     // Fallback: copy to clipboard
+    try {
+      await navigator.clipboard.writeText(text);
+      return { ok: true, error: 'clipboard_fallback' };
+    } catch {
+      return { ok: false, error: 'Could not find compose box or copy to clipboard' };
+    }
+  }
+
+  insertTextIntoElement(composeBox, text);
+  return { ok: true };
+}
+
+// --- Insert draft into reply-all compose ---
+
+async function insertDraftIntoReplyAll(text: string): Promise<{ ok: boolean; error?: string }> {
+  let composeBox = findActiveComposeBox();
+
+  if (!composeBox) {
+    // Try multiple selectors for Reply All — Gmail varies by locale and context
+    const replyAllButton =
+      document.querySelector('[data-tooltip="Reply all"]') as HTMLElement
+      || document.querySelector('[data-tooltip="Reply to all"]') as HTMLElement
+      || document.querySelector('[aria-label="Reply all"]') as HTMLElement
+      || document.querySelector('[aria-label="Reply to all"]') as HTMLElement
+      // Bottom-of-thread action buttons (the second .ams button is typically Reply All)
+      || document.querySelectorAll('.ams.bkI')?.[0] as HTMLElement
+      || (() => {
+        // Fallback: find by the reply-all SVG path or icon within action buttons
+        const buttons = document.querySelectorAll('[role="button"][data-tooltip]');
+        for (const btn of buttons) {
+          const tooltip = btn.getAttribute('data-tooltip')?.toLowerCase() || '';
+          if (tooltip.includes('reply') && tooltip.includes('all')) return btn as HTMLElement;
+        }
+        return null;
+      })();
+
+    if (replyAllButton) {
+      replyAllButton.click();
+      composeBox = await waitForComposeBox(3000);
+    }
+  }
+
+  if (!composeBox) {
     try {
       await navigator.clipboard.writeText(text);
       return { ok: true, error: 'clipboard_fallback' };

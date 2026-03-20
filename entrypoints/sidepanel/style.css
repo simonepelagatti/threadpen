@@ -114,8 +114,8 @@ body {
 
 /* Thread preview */
 .thread-preview {
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
+  background: #fff;
+  border: 1px solid #d1d5db;
   border-radius: 6px;
   padding: 10px;
 }
@@ -128,6 +128,8 @@ body {
   flex-direction: column;
   align-items: center;
   gap: 8px;
+  background: #f9fafb;
+  border-color: #e5e7eb;
 }
 
 .load-thread-btn {
@@ -231,8 +233,9 @@ body {
 .thread-summary {
   margin-top: 8px;
   padding: 8px;
-  background: #f0fdf4;
-  border: 1px solid #86efac;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-left: 3px solid #15803d;
   border-radius: 4px;
   font-size: 12px;
   line-height: 1.5;
@@ -505,6 +508,67 @@ body {
 .insert-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* Insert split button */
+.insert-split {
+  position: relative;
+  display: flex;
+  flex: 1;
+}
+
+.insert-split .insert-main {
+  flex: 1;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  border-right: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.insert-split .insert-dropdown-toggle {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  padding: 8px 6px;
+  font-size: 10px;
+  flex: none;
+}
+
+.insert-dropdown {
+  display: none;
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  margin-bottom: 4px;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 5px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  z-index: 10;
+}
+
+.insert-dropdown.open {
+  display: flex;
+  flex-direction: column;
+}
+
+.insert-dropdown button {
+  padding: 8px 16px;
+  border: none;
+  background: #fff;
+  color: #1a1a1a;
+  font-size: 12px;
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.insert-dropdown button:hover {
+  background: #f0fdf4;
+  color: #15803d;
+}
+
+.insert-dropdown button:not(:last-child) {
+  border-bottom: 1px solid #f0f0f0;
 }
 
 /* Tone controls */

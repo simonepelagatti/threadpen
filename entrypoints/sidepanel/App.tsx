@@ -10,7 +10,7 @@ import {
   DEFAULT_TONE_PRESETS,
   DEFAULT_INTENT_PRESETS,
 } from '../../lib/types';
-import { getThreadData, insertDraftIntoGmail, openNewCompose, sendRuntimeMessage } from '../../lib/messages';
+import { getThreadData, insertDraftIntoGmail, insertDraftReplyAll, openNewCompose, sendRuntimeMessage } from '../../lib/messages';
 import { loadSettings, saveSettings, saveSessionState, loadSessionState, addDraftToHistory } from '../../lib/storage';
 import { parseDraftResponse } from '../../lib/claude';
 import { markdownToPlainText } from '../../lib/markdown';
@@ -385,13 +385,18 @@ export default function App() {
     }, 0);
   };
 
-  const handleInsert = async () => {
+  const handleInsert = async (insertMode: 'reply' | 'reply-all' | 'compose' = state.mode === 'compose' ? 'compose' : 'reply') => {
     if (!state.draft) return;
     const plainDraft = markdownToPlainText(state.draft);
     try {
-      const result = state.mode === 'compose'
-        ? await openNewCompose(plainDraft)
-        : await insertDraftIntoGmail(plainDraft);
+      let result: { ok: boolean; error?: string };
+      if (insertMode === 'compose') {
+        result = await openNewCompose(plainDraft);
+      } else if (insertMode === 'reply-all') {
+        result = await insertDraftReplyAll(plainDraft);
+      } else {
+        result = await insertDraftIntoGmail(plainDraft);
+      }
       if (result.error === 'clipboard_fallback') {
         showToast('Copied to clipboard (compose box not found)');
       } else if (result.ok) {
@@ -518,6 +523,7 @@ export default function App() {
           thread={state.thread}
           onDismiss={() => {
             dispatch({ type: 'SET_THREAD', payload: null });
+            dispatch({ type: 'RESTORE_SESSION', payload: { draft: '', tips: '', notes: '', conversationHistory: [], inputTokens: 0, outputTokens: 0 } });
             sendRuntimeMessage({ type: 'DISMISS_THREAD' });
           }}
           onThreadLoaded={(data) => dispatch({ type: 'SET_THREAD', payload: data })}
@@ -547,9 +553,31 @@ export default function App() {
       {state.draft && !state.streaming && (
         <div className="action-buttons">
           <CopyButton text={markdownToPlainText(state.draft)} />
-          <button className="insert-btn" onClick={handleInsert}>
-            {state.mode === 'compose' ? 'Insert into Compose' : 'Insert into Reply'}
-          </button>
+          {state.mode === 'compose' ? (
+            <button className="insert-btn" onClick={() => handleInsert('compose')}>
+              Insert into Compose
+            </button>
+          ) : (
+            <div className="insert-split">
+              <button className="insert-btn insert-main" onClick={() => handleInsert('reply')}>
+                Insert into Reply
+              </button>
+              <button className="insert-btn insert-dropdown-toggle" onClick={(e) => {
+                const menu = (e.currentTarget.parentElement as HTMLElement).querySelector('.insert-dropdown') as HTMLElement;
+                if (menu) menu.classList.toggle('open');
+              }}>
+                ▾
+              </button>
+              <div className="insert-dropdown">
+                <button onClick={() => { handleInsert('reply'); document.querySelector('.insert-dropdown.open')?.classList.remove('open'); }}>
+                  Reply
+                </button>
+                <button onClick={() => { handleInsert('reply-all'); document.querySelector('.insert-dropdown.open')?.classList.remove('open'); }}>
+                  Reply All
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

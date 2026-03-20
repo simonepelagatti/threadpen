@@ -95,6 +95,9 @@ async function handleMessage(message: RuntimeMessage, sender: chrome.runtime.Mes
     case 'OPEN_NEW_COMPOSE':
       return forwardToContentScript(message);
 
+    case 'INSERT_DRAFT_REPLY_ALL':
+      return forwardToContentScript(message);
+
     case 'DISMISS_THREAD':
       await clearCachedThreadData();
       await clearSessionState();
