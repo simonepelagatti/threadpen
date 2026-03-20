@@ -35,6 +35,13 @@ body {
   color: #15803d;
 }
 
+.version-tag {
+  font-size: 10px;
+  font-weight: 400;
+  color: #999;
+  vertical-align: middle;
+}
+
 .header-actions {
   display: flex;
   align-items: center;
@@ -42,7 +49,8 @@ body {
 }
 
 .settings-btn,
-.history-btn {
+.history-btn,
+.agenda-btn {
   background: none;
   border: none;
   font-size: 18px;
@@ -56,7 +64,8 @@ body {
 }
 
 .settings-btn:hover,
-.history-btn:hover {
+.history-btn:hover,
+.agenda-btn:hover {
   background: #f0fdf4;
 }
 
@@ -881,4 +890,229 @@ body {
   font-size: 10px;
   color: #888;
   margin-top: 2px;
+}
+
+/* Agenda view */
+.agenda-view {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.agenda-view .header h1 {
+  font-size: 14px;
+}
+
+.agenda-toolbar {
+  display: flex;
+  gap: 6px;
+}
+
+.agenda-search {
+  flex: 1;
+  padding: 6px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 5px;
+  font-size: 13px;
+  font-family: inherit;
+}
+
+.agenda-search:focus {
+  outline: none;
+  border-color: #22c55e;
+  box-shadow: 0 0 0 2px rgba(21, 128, 61, 0.15);
+}
+
+.add-contact-btn {
+  padding: 6px 12px;
+  border: 1px solid #15803d;
+  background: #15803d;
+  color: #fff;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.add-contact-btn:hover {
+  background: #116b32;
+  border-color: #116b32;
+}
+
+.agenda-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Contact card */
+.contact-card {
+  border: 1px solid #bbf7d0;
+  border-radius: 6px;
+  padding: 10px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.contact-card:hover {
+  border-color: #22c55e;
+}
+
+.contact-card.expanded {
+  border-color: #15803d;
+}
+
+.contact-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.contact-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.contact-card-name {
+  font-weight: 600;
+  font-size: 13px;
+  color: #1a1a1a;
+}
+
+.contact-card-email {
+  font-size: 11px;
+  color: #888;
+}
+
+.contact-card-badges {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.contact-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.contact-badge.relationship {
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.contact-card-role {
+  font-size: 11px;
+  color: #666;
+  margin-top: 4px;
+}
+
+.contact-card-details {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #bbf7d0;
+}
+
+.contact-detail {
+  font-size: 12px;
+  color: #555;
+  margin-bottom: 4px;
+}
+
+.contact-detail strong {
+  color: #333;
+}
+
+.contact-card-actions {
+  margin-top: 8px;
+  display: flex;
+  gap: 6px;
+}
+
+.contact-card-actions button {
+  padding: 4px 10px;
+  border: 1px solid #15803d;
+  background: #fff;
+  color: #15803d;
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.contact-card-actions button:hover {
+  background: #15803d;
+  color: #fff;
+}
+
+/* Contact editor */
+.contact-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.contact-editor .header h1 {
+  font-size: 14px;
+}
+
+/* Contact badge inline (in compose form) */
+.contact-badge-inline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #15803d;
+  margin-top: 4px;
+  padding: 4px 8px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 4px;
+}
+
+/* Recipient typeahead suggestions */
+.recipient-suggestions {
+  position: absolute;
+  z-index: 10;
+  left: 0;
+  right: 0;
+  margin-top: 2px;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 5px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.recipient-suggestion {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.1s;
+}
+
+.recipient-suggestion:hover {
+  background: #f0fdf4;
+}
+
+.suggestion-name {
+  font-weight: 500;
+  color: #1a1a1a;
+}
+
+.suggestion-email {
+  color: #888;
+  font-size: 11px;
+}
+
+.compose-form .field {
+  position: relative;
 }

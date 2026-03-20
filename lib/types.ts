@@ -119,7 +119,8 @@ export type RuntimeMessage =
   | { type: 'INSERT_DRAFT'; payload: { text: string } }
   | { type: 'OPEN_NEW_COMPOSE'; payload: { text: string } }
   | { type: 'GENERATE_NEW_EMAIL'; payload: NewEmailDraftRequest }
-  | { type: 'DISMISS_THREAD' };
+  | { type: 'DISMISS_THREAD' }
+  | { type: 'EXTRACT_CONTACT_INFO'; payload: { recipientEmail: string; threadSnippet: string; generatedDraft: string } };
 
 // --- Port messages (streaming) ---
 export type StreamPortMessage =
@@ -135,6 +136,32 @@ export interface WindowMessage {
   payload: ThreadData;
 }
 
+export type RelationshipType = 'colleague' | 'client' | 'vendor' | 'manager' | 'report' | 'partner' | 'other';
+
+export interface ContactProfile {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  company: string;
+  relationship: RelationshipType;
+  preferredTone: string;
+  notes: string;
+  fieldMeta: Partial<Record<'name' | 'role' | 'company' | 'relationship' | 'preferredTone' | 'notes', { source: 'manual' | 'auto'; updatedAt: number }>>;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface ContactExtractionResult {
+  email: string;
+  name?: string;
+  role?: string;
+  company?: string;
+  relationship?: RelationshipType;
+  suggestedTone?: string;
+}
+
 export const MAX_THREAD_MESSAGES = 15;
 export const DEFAULT_MODEL = 'claude-sonnet-4-6';
 export const DRAFT_HISTORY_LIMIT = 25;
+export const CONTACT_AGENDA_LIMIT = 200;

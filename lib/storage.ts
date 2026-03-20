@@ -3,8 +3,12 @@ import {
   ThreadData,
   SessionState,
   DraftHistoryEntry,
+  ContactProfile,
+  ContactExtractionResult,
+  RelationshipType,
   DEFAULT_MODEL,
   DRAFT_HISTORY_LIMIT,
+  CONTACT_AGENDA_LIMIT,
   DEFAULT_TONE_PRESETS,
   DEFAULT_INTENT_PRESETS,
 } from './types';
@@ -13,6 +17,7 @@ const SETTINGS_KEY = 'threadpen_settings';
 const THREAD_CACHE_KEY = 'threadpen_thread_cache';
 const SESSION_STATE_KEY = 'threadpen_session_state';
 const DRAFT_HISTORY_KEY = 'threadpen_draft_history';
+const CONTACT_AGENDA_KEY = 'threadpen_contact_agenda';
 
 // --- Settings ---
 
@@ -84,4 +89,93 @@ export async function deleteDraftFromHistory(id: string): Promise<void> {
   const history = await getDraftHistory();
   const filtered = history.filter((e) => e.id !== id);
   await chrome.storage.local.set({ [DRAFT_HISTORY_KEY]: filtered });
+}
+
+// --- Contact Agenda ---
+
+export async function getContactAgenda(): Promise<ContactProfile[]> {
+  const result = await chrome.storage.local.get(CONTACT_AGENDA_KEY);
+  return (result[CONTACT_AGENDA_KEY] as ContactProfile[]) ?? [];
+}
+
+export async function getContactByEmail(email: string): Promise<ContactProfile | null> {
+  const normalized = email.trim().toLowerCase();
+  const contacts = await getContactAgenda();
+  return contacts.find((c) => c.email.toLowerCase() === normalized) ?? null;
+}
+
+export async function saveContact(contact: ContactProfile): Promise<void> {
+  const contacts = await getContactAgenda();
+  const idx = contacts.findIndex((c) => c.id === contact.id);
+  if (idx >= 0) {
+    contacts[idx] = contact;
+  } else {
+    if (contacts.length >= CONTACT_AGENDA_LIMIT) {
+      contacts.pop();
+    }
+    contacts.unshift(contact);
+  }
+  await chrome.storage.local.set({ [CONTACT_AGENDA_KEY]: contacts });
+}
+
+export async function deleteContact(id: string): Promise<void> {
+  const contacts = await getContactAgenda();
+  const filtered = contacts.filter((c) => c.id !== id);
+  await chrome.storage.local.set({ [CONTACT_AGENDA_KEY]: filtered });
+}
+
+const VALID_RELATIONSHIPS: RelationshipType[] = ['colleague', 'client', 'vendor', 'manager', 'report', 'partner', 'other'];
+
+export async function upsertContactFromExtraction(extraction: ContactExtractionResult): Promise<ContactProfile> {
+  const now = Date.now();
+  const existing = await getContactByEmail(extraction.email);
+
+  if (existing) {
+    const updated = { ...existing, updatedAt: now };
+    const autoFields: Array<{ key: keyof ContactProfile & ('name' | 'role' | 'company' | 'relationship' | 'preferredTone' | 'notes'); extractKey: keyof ContactExtractionResult }> = [
+      { key: 'name', extractKey: 'name' },
+      { key: 'role', extractKey: 'role' },
+      { key: 'company', extractKey: 'company' },
+      { key: 'relationship', extractKey: 'relationship' },
+      { key: 'preferredTone', extractKey: 'suggestedTone' },
+    ];
+    for (const { key, extractKey } of autoFields) {
+      const value = extraction[extractKey];
+      if (value && existing.fieldMeta[key]?.source !== 'manual') {
+        if (key === 'relationship') {
+          if (VALID_RELATIONSHIPS.includes(value as RelationshipType)) {
+            (updated as any)[key] = value;
+            updated.fieldMeta = { ...updated.fieldMeta, [key]: { source: 'auto', updatedAt: now } };
+          }
+        } else {
+          (updated as any)[key] = value;
+          updated.fieldMeta = { ...updated.fieldMeta, [key]: { source: 'auto', updatedAt: now } };
+        }
+      }
+    }
+    await saveContact(updated);
+    return updated;
+  }
+
+  const contact: ContactProfile = {
+    id: `contact-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    email: extraction.email.trim().toLowerCase(),
+    name: extraction.name ?? '',
+    role: extraction.role ?? '',
+    company: extraction.company ?? '',
+    relationship: (extraction.relationship && VALID_RELATIONSHIPS.includes(extraction.relationship)) ? extraction.relationship : 'other',
+    preferredTone: extraction.suggestedTone ?? '',
+    notes: '',
+    fieldMeta: {
+      ...(extraction.name ? { name: { source: 'auto' as const, updatedAt: now } } : {}),
+      ...(extraction.role ? { role: { source: 'auto' as const, updatedAt: now } } : {}),
+      ...(extraction.company ? { company: { source: 'auto' as const, updatedAt: now } } : {}),
+      ...(extraction.relationship ? { relationship: { source: 'auto' as const, updatedAt: now } } : {}),
+      ...(extraction.suggestedTone ? { preferredTone: { source: 'auto' as const, updatedAt: now } } : {}),
+    },
+    createdAt: now,
+    updatedAt: now,
+  };
+  await saveContact(contact);
+  return contact;
 }

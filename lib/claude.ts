@@ -1,6 +1,21 @@
-import { ThreadData, ConversationTurn, Settings } from './types';
+import { ThreadData, ConversationTurn, Settings, ContactProfile } from './types';
 
-export function buildSystemPrompt(thread: ThreadData, settings: Settings): string {
+export function buildContactContext(contact: ContactProfile): string {
+  let block = '\n--- RECIPIENT PROFILE ---\n';
+  if (contact.name) block += `Name: ${contact.name}\n`;
+  if (contact.role || contact.company) {
+    block += `Role: ${contact.role}${contact.company ? ` at ${contact.company}` : ''}\n`;
+  }
+  if (contact.relationship && contact.relationship !== 'other') {
+    block += `Relationship: ${contact.relationship.charAt(0).toUpperCase() + contact.relationship.slice(1)}\n`;
+  }
+  if (contact.preferredTone) block += `Preferred tone: ${contact.preferredTone}\n`;
+  if (contact.notes) block += `Notes: ${contact.notes}\n`;
+  block += '---\nAdapt your writing style to match this recipient\'s preferred tone.\n';
+  return block;
+}
+
+export function buildSystemPrompt(thread: ThreadData, settings: Settings, contact?: ContactProfile | null): string {
   const guidelines = settings.writingGuidelines.trim();
   const userName = settings.userName.trim();
   const userEmail = settings.userEmail.trim();
@@ -48,6 +63,10 @@ ${guidelines}
 `;
   }
 
+  if (contact) {
+    prompt += buildContactContext(contact);
+  }
+
   prompt += `
 --- EMAIL THREAD ---
 Subject: ${thread.subject}
@@ -72,7 +91,7 @@ ${msg.body}
   return prompt;
 }
 
-export function buildNewEmailSystemPrompt(settings: Settings): string {
+export function buildNewEmailSystemPrompt(settings: Settings, contact?: ContactProfile | null): string {
   const guidelines = settings.writingGuidelines.trim();
   const userName = settings.userName.trim();
 
@@ -101,6 +120,10 @@ IMPORTANT: Structure your response in exactly two sections separated by the mark
 Writing Guidelines (follow these for tone, style, and content):
 ${guidelines}
 `;
+  }
+
+  if (contact) {
+    prompt += buildContactContext(contact);
   }
 
   return prompt;
@@ -193,6 +216,27 @@ export function buildNewEmailMessages(
   }
 
   return messages;
+}
+
+export function buildContactExtractionPrompt(threadSnippet: string, generatedDraft: string, recipientEmail: string): string {
+  return `Extract information about the email recipient from the context below. Return ONLY a JSON object with these fields (omit fields you cannot determine):
+
+{
+  "email": "${recipientEmail}",
+  "name": "full name",
+  "role": "job title",
+  "company": "company name",
+  "relationship": "colleague|client|vendor|manager|report|partner|other",
+  "suggestedTone": "brief tone description e.g. formal and respectful"
+}
+
+--- THREAD CONTEXT ---
+${threadSnippet}
+
+--- GENERATED DRAFT ---
+${generatedDraft}
+
+Respond with JSON only, no explanation.`;
 }
 
 export function parseDraftResponse(raw: string): { draft: string; tips: string } {

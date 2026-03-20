@@ -4,14 +4,16 @@ import {
   GenerateDraftResponse,
   SummarizeResponse,
   StreamPortMessage,
+  ContactExtractionResult,
 } from '../lib/types';
-import { loadSettings, cacheThreadData, getCachedThreadData, clearCachedThreadData, clearSessionState } from '../lib/storage';
+import { loadSettings, cacheThreadData, getCachedThreadData, clearCachedThreadData, clearSessionState, getContactByEmail, upsertContactFromExtraction } from '../lib/storage';
 import {
   buildSystemPrompt,
   buildNewEmailSystemPrompt,
   buildSummarizationSystemPrompt,
   buildMessages,
   buildNewEmailMessages,
+  buildContactExtractionPrompt,
   parseDraftResponse,
 } from '../lib/claude';
 
@@ -80,6 +82,13 @@ async function handleMessage(message: RuntimeMessage, sender: chrome.runtime.Mes
     case 'DISMISS_THREAD':
       await clearCachedThreadData();
       await clearSessionState();
+      return { ok: true };
+
+    case 'EXTRACT_CONTACT_INFO':
+      // Fire-and-forget: don't await
+      extractContactInfo(message.payload).catch((err) =>
+        console.warn('[ThreadPen] Contact extraction failed:', err)
+      );
       return { ok: true };
 
     default:
@@ -281,6 +290,54 @@ async function summarizeThread(): Promise<SummarizeResponse> {
   };
 }
 
+// --- Contact extraction ---
+
+function extractRecipientFromThread(thread: ThreadData, userEmail: string): string | null {
+  const normalizedUser = userEmail.trim().toLowerCase();
+  for (const msg of [...thread.messages].reverse()) {
+    const fromEmail = msg.from.match(/<([^>]+)>/)?.[1]?.toLowerCase() || msg.from.trim().toLowerCase();
+    if (fromEmail && fromEmail !== normalizedUser) return fromEmail;
+    const toEmail = msg.to.match(/<([^>]+)>/)?.[1]?.toLowerCase() || msg.to.trim().toLowerCase();
+    if (toEmail && toEmail !== normalizedUser) return toEmail;
+  }
+  return null;
+}
+
+async function extractContactInfo(payload: { recipientEmail: string; threadSnippet: string; generatedDraft: string }): Promise<void> {
+  const settings = await loadSettings();
+  if (!settings.apiKey || !payload.recipientEmail) return;
+
+  const prompt = buildContactExtractionPrompt(payload.threadSnippet, payload.generatedDraft, payload.recipientEmail);
+
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': settings.apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true',
+    },
+    body: JSON.stringify({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 256,
+      messages: [{ role: 'user', content: prompt }],
+    }),
+  });
+
+  if (!response.ok) return;
+
+  const data = await response.json();
+  const rawText = data.content?.[0]?.text ?? '';
+
+  // Parse JSON from response (may be wrapped in markdown code fences)
+  const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) return;
+
+  const extracted: ContactExtractionResult = JSON.parse(jsonMatch[0]);
+  extracted.email = payload.recipientEmail;
+  await upsertContactFromExtraction(extracted);
+}
+
 // --- Streaming handlers ---
 
 async function handleStreamDraft(
@@ -300,7 +357,11 @@ async function handleStreamDraft(
       return;
     }
 
-    const systemPrompt = buildSystemPrompt(threadData, settings);
+    // Look up contact for recipient
+    const recipientEmail = settings.userEmail ? extractRecipientFromThread(threadData, settings.userEmail) : null;
+    const contact = recipientEmail ? await getContactByEmail(recipientEmail) : null;
+
+    const systemPrompt = buildSystemPrompt(threadData, settings, contact);
     const messages = buildMessages(
       payload.notes,
       payload.conversationHistory,
@@ -325,7 +386,10 @@ async function handleStreamNewEmail(
       return;
     }
 
-    const systemPrompt = buildNewEmailSystemPrompt(settings);
+    // Look up contact for recipient
+    const contact = payload.recipient ? await getContactByEmail(payload.recipient) : null;
+
+    const systemPrompt = buildNewEmailSystemPrompt(settings, contact);
     const messages = buildNewEmailMessages(
       payload.notes,
       payload.recipient,

@@ -21,8 +21,11 @@ import TipsOutput from './components/TipsOutput';
 import CopyButton from './components/CopyButton';
 import SettingsView from './components/SettingsView';
 import HistoryView from './components/HistoryView';
+import AgendaView from './components/AgendaView';
+import ContactEditor from './components/ContactEditor';
 import ToneControls from './components/ToneControls';
 import ComposeForm from './components/ComposeForm';
+import { ContactProfile } from '../../lib/types';
 
 interface State {
   thread: ThreadData | null;
@@ -176,7 +179,8 @@ const initialState: State = {
 
 export default function App() {
   const [state, dispatch] = useReducer(reducer, initialState);
-  const [view, setView] = useState<'main' | 'settings' | 'history'>('main');
+  const [view, setView] = useState<'main' | 'settings' | 'history' | 'agenda' | 'contact-editor'>('main');
+  const [editingContact, setEditingContact] = useState<ContactProfile | undefined>(undefined);
   const [settings, setSettings] = useState<Settings | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -311,6 +315,9 @@ export default function App() {
 
         // Save to draft history
         saveToDraftHistory(msg.inputTokens, msg.outputTokens);
+
+        // Fire-and-forget contact extraction
+        triggerContactExtraction();
       } else if (msg.type === 'STREAM_ERROR') {
         dispatch({ type: 'SET_ERROR', payload: msg.error });
         port.disconnect();
@@ -335,6 +342,37 @@ export default function App() {
         });
       }
     }, 100);
+  };
+
+  const triggerContactExtraction = () => {
+    setTimeout(async () => {
+      const session = await loadSessionState();
+      if (!session?.draft) return;
+      // Determine recipient email
+      let recipientEmail = '';
+      if (state.mode === 'compose') {
+        recipientEmail = state.composeRecipient.trim();
+      } else if (state.thread?.messages.length) {
+        const s = await loadSettings();
+        const userEmail = s.userEmail?.trim().toLowerCase() || '';
+        for (const msg of [...state.thread.messages].reverse()) {
+          const fromEmail = msg.from.match(/<([^>]+)>/)?.[1]?.toLowerCase() || msg.from.trim().toLowerCase();
+          if (fromEmail && fromEmail !== userEmail) { recipientEmail = fromEmail; break; }
+          const toEmail = msg.to.match(/<([^>]+)>/)?.[1]?.toLowerCase() || msg.to.trim().toLowerCase();
+          if (toEmail && toEmail !== userEmail) { recipientEmail = toEmail; break; }
+        }
+      }
+      if (!recipientEmail) return;
+      // Build a snippet from thread or compose context
+      let threadSnippet = '';
+      if (state.thread?.messages.length) {
+        threadSnippet = state.thread.messages.slice(-3).map((m) => `From: ${m.from}\n${m.body}`).join('\n---\n');
+      }
+      sendRuntimeMessage({
+        type: 'EXTRACT_CONTACT_INFO',
+        payload: { recipientEmail, threadSnippet, generatedDraft: session.draft },
+      });
+    }, 200);
   };
 
   const handleRefinementClick = (instruction: string) => {
@@ -401,10 +439,34 @@ export default function App() {
     );
   }
 
+  if (view === 'agenda') {
+    return (
+      <div className="app">
+        <AgendaView
+          onBack={() => setView('main')}
+          onEdit={(contact) => { setEditingContact(contact); setView('contact-editor'); }}
+          onAdd={() => { setEditingContact(undefined); setView('contact-editor'); }}
+        />
+      </div>
+    );
+  }
+
+  if (view === 'contact-editor') {
+    return (
+      <div className="app">
+        <ContactEditor
+          initial={editingContact}
+          onSave={() => setView('agenda')}
+          onBack={() => setView('agenda')}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="app">
       <header className="header">
-        <h1>ThreadPen</h1>
+        <h1>ThreadPen <span className="version-tag">v{chrome.runtime.getManifest().version}</span></h1>
         <div className="header-actions">
           <button
             className="history-btn"
@@ -414,6 +476,16 @@ export default function App() {
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="8" cy="8" r="6.5" />
               <polyline points="8,4.5 8,8 10.5,9.5" />
+            </svg>
+          </button>
+          <button
+            className="agenda-btn"
+            onClick={() => setView('agenda')}
+            title="Contact Agenda"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="8" cy="5.5" r="3" />
+              <path d="M2.5 14c0-3 2.5-4.5 5.5-4.5s5.5 1.5 5.5 4.5" />
             </svg>
           </button>
           <button

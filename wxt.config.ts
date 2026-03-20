@@ -5,7 +5,7 @@ export default defineConfig({
   manifest: {
     name: 'ThreadPen — Gmail Reply Assistant',
     description: 'Draft Gmail replies with AI assistance using Claude',
-    version: '1.0.0',
+    version: '1.1.0',
     permissions: ['storage', 'activeTab', 'clipboardWrite', 'sidePanel'],
     host_permissions: ['https://mail.google.com/*', 'https://api.anthropic.com/*'],
     action: {},
