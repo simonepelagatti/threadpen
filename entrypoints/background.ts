@@ -18,6 +18,22 @@ import {
 } from '../lib/claude';
 
 export default defineBackground(() => {
+  // Re-inject content scripts into existing Gmail tabs on install/reload
+  chrome.runtime.onInstalled.addListener(async () => {
+    const tabs = await chrome.tabs.query({ url: 'https://mail.google.com/*' });
+    for (const tab of tabs) {
+      if (!tab.id) continue;
+      try {
+        await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          files: ['/content-scripts/gmail-reader.js'],
+        });
+      } catch (e) {
+        console.warn('[ThreadPen] Failed to re-inject content script into tab', tab.id, e);
+      }
+    }
+  });
+
   // Open side panel when extension icon is clicked
   chrome.action.onClicked.addListener(async (tab) => {
     if (tab.id) {

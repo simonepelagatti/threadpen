@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { ThreadData } from '../../../lib/types';
-import { summarizeThread, getThreadData } from '../../../lib/messages';
+import React, { useState, useEffect } from 'react';
+import { ThreadData, Settings } from '../../../lib/types';
+import { summarizeThread, getThreadData, sendRuntimeMessage } from '../../../lib/messages';
 import { markdownToHtml } from '../../../lib/markdown';
+import { getContactByEmail, loadSettings } from '../../../lib/storage';
 
 interface Props {
   thread: ThreadData | null;
@@ -16,6 +17,37 @@ export default function ThreadPreview({ thread, onDismiss, onThreadLoaded }: Pro
   const [summaryExpanded, setSummaryExpanded] = useState(true);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [contactStatus, setContactStatus] = useState<'unknown' | 'checking' | 'none' | 'exists' | 'adding' | 'added'>('unknown');
+  const [recipientEmail, setRecipientEmail] = useState<string | null>(null);
+
+  // Determine counterpart email and check agenda when thread changes
+  useEffect(() => {
+    if (!thread?.messages.length) {
+      setContactStatus('unknown');
+      setRecipientEmail(null);
+      return;
+    }
+    setContactStatus('checking');
+    loadSettings().then((settings) => {
+      const userEmail = settings.userEmail?.trim().toLowerCase() || '';
+      for (const msg of [...thread.messages].reverse()) {
+        const fromEmail = msg.from.match(/<([^>]+)>/)?.[1]?.toLowerCase() || msg.from.trim().toLowerCase();
+        if (fromEmail && fromEmail !== userEmail) {
+          setRecipientEmail(fromEmail);
+          getContactByEmail(fromEmail).then((c) => setContactStatus(c ? 'exists' : 'none'));
+          return;
+        }
+        const toEmail = msg.to.match(/<([^>]+)>/)?.[1]?.toLowerCase() || msg.to.trim().toLowerCase();
+        if (toEmail && toEmail !== userEmail) {
+          setRecipientEmail(toEmail);
+          getContactByEmail(toEmail).then((c) => setContactStatus(c ? 'exists' : 'none'));
+          return;
+        }
+      }
+      setContactStatus('none');
+      setRecipientEmail(null);
+    });
+  }, [thread]);
 
   const showTemporaryError = (msg: string) => {
     setLoadError(msg);
@@ -73,6 +105,25 @@ export default function ThreadPreview({ thread, onDismiss, onThreadLoaded }: Pro
     }
   };
 
+  const handleAddContact = async () => {
+    if (!recipientEmail || !thread) return;
+    setContactStatus('adding');
+    const threadSnippet = thread.messages.slice(-3).map((m) => `From: ${m.from}\n${m.body}`).join('\n---\n');
+    try {
+      await sendRuntimeMessage({
+        type: 'EXTRACT_CONTACT_INFO',
+        payload: { recipientEmail, threadSnippet, generatedDraft: '' },
+      });
+      // Give extraction a moment to complete (it's fast with Haiku)
+      setTimeout(async () => {
+        const contact = await getContactByEmail(recipientEmail);
+        setContactStatus(contact ? 'added' : 'none');
+      }, 3000);
+    } catch {
+      setContactStatus('none');
+    }
+  };
+
   return (
     <div className="thread-preview">
       <div className="thread-header-row">
@@ -96,6 +147,17 @@ export default function ThreadPreview({ thread, onDismiss, onThreadLoaded }: Pro
         >
           {summarizing ? 'Summarizing...' : summary ? 'Re-summarize' : 'Summarize'}
         </button>
+        {recipientEmail && contactStatus === 'none' && (
+          <button className="summarize-btn" onClick={handleAddContact}>
+            Add to Agenda
+          </button>
+        )}
+        {contactStatus === 'adding' && (
+          <button className="summarize-btn" disabled>Adding...</button>
+        )}
+        {(contactStatus === 'exists' || contactStatus === 'added') && (
+          <span className="contact-badge relationship">In Agenda</span>
+        )}
       </div>
 
       {summary && (

@@ -6,7 +6,7 @@ export default defineConfig({
     name: 'ThreadPen — Gmail Reply Assistant',
     description: 'Draft Gmail replies with AI assistance using Claude',
     version: '1.1.0',
-    permissions: ['storage', 'activeTab', 'clipboardWrite', 'sidePanel'],
+    permissions: ['storage', 'activeTab', 'clipboardWrite', 'sidePanel', 'scripting'],
     host_permissions: ['https://mail.google.com/*', 'https://api.anthropic.com/*'],
     action: {},
     side_panel: {
